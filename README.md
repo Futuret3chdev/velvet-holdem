@@ -2,7 +2,7 @@
 
 Six-max no-limit Texas Hold'em at a private felt table. Five CGI regulars are already online. You take the empty chair.
 
-**Play:** [velvet-holdem.vercel.app](https://velvet-holdem.vercel.app)
+**Play:** [vercel.com/new/import](https://vercel.com/new/import?s=https://github.com/Futuret3chdev/velvet-holdem) the GitHub repo, or open the deployment once it’s connected.
 
 **GitHub:** [github.com/Futuret3chdev/velvet-holdem](https://github.com/Futuret3chdev/velvet-holdem)
 
