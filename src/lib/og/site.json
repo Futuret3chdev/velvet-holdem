@@ -1,6 +1,6 @@
 {
-  "title": "Lumina",
-  "description": "Cinematic 3D asset studio — stage objects, light, and form.",
-  "type": "website",
+  "title": "Velvet Hold'em",
+  "description": "Midnight-club Texas Hold'em. Read the table, bluff the room, take the pot.",
+  "type": "x:game",
   "card": "custom"
 }

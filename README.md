@@ -1,22 +1,29 @@
-# MT World House
+# Velvet Hold'em
 
-Selfie as the aviator, dress from the MT World gallery, and drop any 3D model into your empty house.
+Six-max no-limit Texas Hold'em at a private felt table. Five CGI regulars are already online. You take the empty chair.
 
-**GitHub:** [github.com/Futuret3chdev/mt-world](https://github.com/Futuret3chdev/mt-world)
+**Play:** [velvet-holdem.vercel.app](https://velvet-holdem.vercel.app)
 
-## Try it
+**GitHub:** [github.com/Futuret3chdev/velvet-holdem](https://github.com/Futuret3chdev/velvet-holdem)
 
-- **Me · Aviator** — front camera, your face on the character, dropped into the house
-- **Dress** — Aviator, Street, Formal, Casual, MT, Gold cape, Token head
-- Gallery looks (Nova, Rex, Mira…) from [MT WORLD — Gallery](https://memetorrent.futuret3ch.com.au/catalog/mt-world-gallery)
-- Tap catalog models or **3D** (GLB / GLTF) to furnish the house, lot, or garden
-- Take a photo to sculpt a 3D relief
+## The room
 
-## Deploy on Vercel
+| Seat | Style |
+| --- | --- |
+| Nico Vale | Sharp |
+| Ruby Chen | Pressure |
+| Cal Harrow | Caller |
+| Mira Sol | Rock |
+| Jax Rook | Heat |
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Futuret3chdev/mt-world&project-name=mt-world&repository-name=mt-world)
+Blinds 25 / 50. Deep stacks.
 
-Import `Futuret3chdev/mt-world` as a **new** Vercel project. If it does not appear, grant the Vercel GitHub App access to `mt-world`.
+## Play
+
+- Sit down with a name
+- Hole cards on the rail, board above the pot
+- Fold / Check / Call / Raise, plus Min · Pot · All in
+- Keys: `F` fold, `C` check or call, `R` raise, `A` all in, `N` next hand
 
 ## Stack
 

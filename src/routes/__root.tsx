@@ -8,7 +8,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Lumina";
+const APP_NAME = "Velvet Hold'em";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -19,9 +19,9 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Stage cars, houses, trees, and photos in a cinematic 3D studio. Export PNG renders or GLB models for your game.",
+          "Sit the empty chair. Five CGI regulars are already online. No-limit Texas Hold'em at a private felt table.",
       },
-      { name: "theme-color", content: "#0a0a0b" },
+      { name: "theme-color", content: "#0b0c0b" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
@@ -33,7 +33,7 @@ export const Route = createRootRoute({
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
