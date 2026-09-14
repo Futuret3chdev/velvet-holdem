@@ -96,11 +96,11 @@
 }
 
 .cast-thumb {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 999px;
   object-fit: cover;
-  object-position: top;
+  object-position: center;
   background: var(--color-elevated);
   box-shadow: var(--shadow-border);
 }

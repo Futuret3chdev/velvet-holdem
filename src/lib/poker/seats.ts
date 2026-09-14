@@ -14,11 +14,11 @@ export function seatPos(seat: number, count = 6, radiusX = 2.42, radiusZ = 1.78)
  */
 const VIS: [number, number, number][] = [
   [0, 0, 1.22],
-  [-0.88, 0, -0.86],
-  [-0.44, 0, -1.02],
+  [-0.8, 0, -0.86],
+  [-0.4, 0, -1.02],
   [0, 0, -1.1],
-  [0.44, 0, -1.02],
-  [0.88, 0, -0.86],
+  [0.4, 0, -1.02],
+  [0.8, 0, -0.86],
 ];
 
 export function visPos(seat: number): [number, number, number] {

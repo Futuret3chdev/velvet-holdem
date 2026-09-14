@@ -69,7 +69,11 @@ export const REGULARS: Spec[] = [
 ];
 
 export function faceUrl(castId: string) {
-  return `/poker/cast/${castId}.png`;
+  return `/poker/cast/${castId}.png?v=5`;
+}
+
+export function thumbUrl(castId: string) {
+  return `/poker/cast/${castId}-face.png?v=5`;
 }
 
 export function makeHero(name: string): SeatPlayer {
@@ -92,6 +96,7 @@ export function makeHero(name: string): SeatPlayer {
     hair: "#2a221c",
     skin: "#d2a07a",
     face: "",
+    thumb: "",
     castId: "",
     lastAct: null,
   };
@@ -117,6 +122,7 @@ export function makeBots(): SeatPlayer[] {
     hair: r.hair,
     skin: r.skin,
     face: faceUrl(r.castId),
+    thumb: thumbUrl(r.castId),
     castId: r.castId,
     lastAct: null,
   }));

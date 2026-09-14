@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { REGULARS, STYLE_LABEL, faceUrl } from "@/lib/poker/roster";
+import { REGULARS, STYLE_LABEL, thumbUrl } from "@/lib/poker/roster";
 import { loadSavedName, usePoker } from "@/lib/poker/store";
 import { unlockAudio } from "@/lib/poker/audio";
 
@@ -14,7 +14,7 @@ export function Lobby() {
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <header className="max-w-lg">
         <p className="text-xs uppercase tracking-widest text-subtle">Private room · six-max · live</p>
-        <h1 className="font-display mt-1 text-4xl leading-none text-fg sm:text-5xl">Velvet Hold'em</h1>
+        <h1 className="font-display mt-1 text-3xl leading-none text-fg sm:text-5xl">Velvet Hold'em</h1>
       </header>
       <div className="pointer-events-auto mx-auto w-full max-w-lg rounded-2xl bg-surface/95 p-4 shadow-[var(--shadow-border)]">
         <p className="text-sm leading-relaxed text-muted">
@@ -23,7 +23,7 @@ export function Lobby() {
         <ul className="mt-3 flex gap-2">
           {REGULARS.map((r) => (
             <li key={r.name} className="min-w-0 flex-1 text-center">
-              <img src={faceUrl(r.castId)} alt="" className="cast-thumb mx-auto" />
+              <img src={thumbUrl(r.castId)} alt="" className="cast-thumb mx-auto" />
               <p className="mt-1 truncate text-xs font-medium text-fg">{r.name.split(" ")[0]}</p>
               <p className="text-xs text-muted">
                 <span className="online-dot" />

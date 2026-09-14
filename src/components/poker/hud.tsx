@@ -60,56 +60,53 @@ export function Hud() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <header className="pointer-events-auto flex items-start justify-between gap-3">
-        <div>
-          <p className="font-display text-xl leading-none tracking-tight text-fg sm:text-2xl">Velvet Hold'em</p>
-          <p className="mt-1 text-xs text-muted">
-            {BIG_BLIND / 2}/{BIG_BLIND} · Hand #{table.hand}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="font-mono text-xs uppercase tracking-widest text-subtle">Pot</p>
-          <p className="font-display text-3xl leading-none tabular-nums text-fg sm:text-4xl">{money(table.pot)}</p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={leave}>
-          Leave
-        </Button>
-      </header>
-
-      <div className="pointer-events-auto mx-auto grid w-full max-w-lg gap-2">
+      <div className="pointer-events-auto">
+        <header className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-display text-xl leading-none tracking-tight text-fg sm:text-2xl">Velvet Hold'em</p>
+            <p className="mt-1 text-xs text-muted">
+              {BIG_BLIND / 2}/{BIG_BLIND} · Hand #{table.hand}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="font-mono text-xs uppercase tracking-widest text-subtle">Pot</p>
+            <p className="font-display text-3xl leading-none tabular-nums text-fg sm:text-4xl">{money(table.pot)}</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={leave}>
+            Leave
+          </Button>
+        </header>
         {board.length ? (
-          <div className="flex justify-center gap-1">
+          <div className="mt-2 flex justify-center gap-1">
             {board.map((c, i) => (
               <PlayingCard key={`${table.hand}-b${i}`} card={c} size="sm" />
             ))}
           </div>
         ) : null}
-        <div className="text-center">
-          <p className="text-sm text-muted">{status}</p>
-          {quote ? <p className="font-display text-base italic text-fg">{quote}</p> : null}
-        </div>
-        <div className="flex gap-1 overflow-x-auto">
+        <p className="mt-2 text-center text-sm text-muted">
+          {status}
+          {quote ? <span className="text-fg"> · {quote}</span> : null}
+        </p>
+      </div>
+
+      <div className="pointer-events-auto mx-auto grid w-full max-w-lg gap-2">
+        <div className="flex gap-1">
           {table.players.map((p) => (
             <div
               key={p.id}
-              className={`min-w-14 flex-1 rounded-lg px-1.5 py-1.5 ${
+              className={`min-w-0 flex-1 rounded-lg px-1 py-1 ${
                 table.toAct === p.seat ? "seat-acting bg-elevated" : "bg-surface/85"
               }`}
             >
-              {p.face ? (
-                <img
-                  src={p.face}
-                  alt=""
-                  className={`cast-thumb mx-auto ${p.folded ? "opacity-40" : ""}`}
-                />
+              {p.thumb ? (
+                <img src={p.thumb} alt="" className={`cast-thumb mx-auto ${p.folded ? "opacity-40" : ""}`} />
               ) : (
                 <div className="cast-thumb mx-auto flex items-center justify-center bg-elevated text-xs text-muted">
                   You
                 </div>
               )}
-              <p className="mt-1 truncate text-center text-xs font-medium text-fg">
+              <p className="mt-0.5 truncate text-center text-xs font-medium text-fg">
                 {p.isHero ? "You" : p.name.split(" ")[0]}
-                {p.folded ? " · out" : ""}
               </p>
               <p className="text-center font-mono text-xs tabular-nums text-muted">{money(p.stack)}</p>
             </div>
@@ -140,9 +137,7 @@ export function Hud() {
                         onValueChange={setRaise}
                         aria-label="Raise amount"
                       />
-                      <span className="w-14 text-right font-mono text-sm tabular-nums text-fg">
-                        {money(clamped)}
-                      </span>
+                      <span className="w-14 text-right font-mono text-sm tabular-nums text-fg">{money(clamped)}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-1">
                       <Button size="sm" variant="ghost" onClick={() => setRaise(L.minRaiseTo)}>

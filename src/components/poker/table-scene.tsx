@@ -137,18 +137,21 @@ function CameraRig({ lobby = false }: { lobby?: boolean }) {
   useFrame(({ camera }) => {
     const cam = camera as THREE.PerspectiveCamera;
     const portrait = size.height / Math.max(1, size.width) > 1.12;
-    cam.near = 0.05;
-    cam.far = 28;
-    cam.clearViewOffset();
+    cam.near = 0.08;
+    cam.far = 24;
     if (portrait) {
-      const hfov = (lobby ? 72 : 66) * DEG;
+      const hfov = 56 * DEG;
       cam.fov = ((2 * Math.atan(Math.tan(hfov / 2) * (size.height / Math.max(1, size.width)))) * 180) / Math.PI;
-      cam.position.set(0, lobby ? 1.16 : 1.04, lobby ? 2.15 : 1.82);
-      cam.lookAt(0, lobby ? 0.9 : 0.82, -0.58);
+      cam.position.set(0, lobby ? 1.0 : 0.96, lobby ? 1.95 : 1.62);
+      cam.lookAt(0, 0.92, -0.72);
+      const y0 = Math.round(size.height * (lobby ? 0.06 : 0.08));
+      const h = Math.round(size.height * (lobby ? 0.56 : 0.58));
+      cam.setViewOffset(size.width, size.height, 0, y0, size.width, h);
     } else {
-      cam.fov = lobby ? 40 : 38;
-      cam.position.set(0, 1.05, 2.35);
-      cam.lookAt(0, 0.82, -0.55);
+      cam.fov = 36;
+      cam.position.set(0, 1.0, 2.35);
+      cam.lookAt(0, 0.88, -0.62);
+      cam.clearViewOffset();
     }
     cam.updateProjectionMatrix();
   });

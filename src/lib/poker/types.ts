@@ -28,6 +28,7 @@ export type SeatPlayer = {
   hair: string;
   skin: string;
   face: string;
+  thumb: string;
   castId: string;
   lastAct: ActionKind | null;
 };
