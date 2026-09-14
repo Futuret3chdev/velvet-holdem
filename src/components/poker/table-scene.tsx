@@ -250,7 +250,7 @@ export function TableScene() {
         <CardMesh
           key={`${table.hand}-b${i}`}
           card={c}
-          position={[-0.52 + i * 0.26, 0.12, 0.22]}
+          position={[-0.52 + i * 0.26, 0.12, -0.08]}
           hidden={i >= table.boardRevealed}
           scale={1.12}
         />
