@@ -8,8 +8,6 @@ import { chipPos, holePos } from "@/lib/poker/seats";
 import { Character, EmptyChair } from "./character";
 import { CardMesh } from "./card-mesh";
 
-const DEG = Math.PI / 180;
-
 function makeFelt() {
   const c = document.createElement("canvas");
   c.width = 512;
@@ -136,23 +134,13 @@ function CameraRig({ lobby = false }: { lobby?: boolean }) {
   const size = useThree((s) => s.size);
   useFrame(({ camera }) => {
     const cam = camera as THREE.PerspectiveCamera;
-    const portrait = size.height / Math.max(1, size.width) > 1.12;
     cam.near = 0.08;
     cam.far = 24;
-    if (portrait) {
-      const hfov = 56 * DEG;
-      cam.fov = ((2 * Math.atan(Math.tan(hfov / 2) * (size.height / Math.max(1, size.width)))) * 180) / Math.PI;
-      cam.position.set(0, lobby ? 1.0 : 0.96, lobby ? 1.95 : 1.62);
-      cam.lookAt(0, 0.92, -0.72);
-      const y0 = Math.round(size.height * (lobby ? 0.06 : 0.08));
-      const h = Math.round(size.height * (lobby ? 0.56 : 0.58));
-      cam.setViewOffset(size.width, size.height, 0, y0, size.width, h);
-    } else {
-      cam.fov = 36;
-      cam.position.set(0, 1.0, 2.35);
-      cam.lookAt(0, 0.88, -0.62);
-      cam.clearViewOffset();
-    }
+    cam.clearViewOffset();
+    const portrait = size.height / Math.max(1, size.width) > 1.05;
+    cam.fov = portrait ? 42 : 36;
+    cam.position.set(0, lobby ? 1.12 : 1.08, portrait ? 2.05 : 2.4);
+    cam.lookAt(0, 0.68, portrait ? -0.35 : -0.45);
     cam.updateProjectionMatrix();
   });
   return null;
@@ -233,7 +221,7 @@ export function TableScene() {
               player={p}
               acting={table.toAct === p.seat}
               winning={winners.has(p.id)}
-              talking={Boolean(quote) && quote.startsWith(p.name)}
+              quote={quote}
             />
             <ChipStack seat={p.seat} stack={p.stack} />
             {p.hole && !p.folded

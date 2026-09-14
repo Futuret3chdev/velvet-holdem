@@ -13,12 +13,12 @@ export function seatPos(seat: number, count = 6, radiusX = 2.42, radiusZ = 1.78)
  * compact far arc so every face is in frame on a portrait phone.
  */
 const VIS: [number, number, number][] = [
-  [0, 0, 1.22],
-  [-0.8, 0, -0.86],
-  [-0.4, 0, -1.02],
-  [0, 0, -1.1],
-  [0.4, 0, -1.02],
-  [0.8, 0, -0.86],
+  [0, 0, 1.18],
+  [-0.7, 0, -0.72],
+  [-0.36, 0, -0.92],
+  [0, 0, -1.02],
+  [0.36, 0, -0.92],
+  [0.7, 0, -0.72],
 ];
 
 export function visPos(seat: number): [number, number, number] {

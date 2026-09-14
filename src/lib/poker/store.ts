@@ -50,6 +50,12 @@ function lastSpeak(prev: Table, next: Table) {
   return line;
 }
 
+function thinkQuote(table: Table | null) {
+  const actor = table && table.toAct >= 0 ? table.players[table.toAct] : null;
+  if (!actor?.isBot) return "";
+  return `${actor.name}: ${tableLine("think")}`;
+}
+
 export const usePoker = create<PokerState>((set, get) => ({
   screen: "lobby",
   name: "",
@@ -69,14 +75,15 @@ export const usePoker = create<PokerState>((set, get) => ({
     }
     const table = createTable(n);
     const L = heroLegal(table);
+    const actor = table.players[table.toAct];
     set({
       screen: "table",
       name: n,
       table,
-      think: table.players[table.toAct]?.isBot ? botDelay(table.players[table.toAct]!.style) : 0,
+      think: actor?.isBot ? botDelay(actor.style) : 0,
       pause: 0,
       raiseTo: L?.minRaiseTo || 0,
-      quote: "Cards are in the air.",
+      quote: actor?.isBot ? thinkQuote(table) : tableLine("deal"),
     });
   },
   act: (kind, raiseTo) => {
@@ -93,7 +100,12 @@ export const usePoker = create<PokerState>((set, get) => ({
       think: actor?.isBot && next.street !== "showdown" ? botDelay(actor.style) : 0,
       pause: next.street === "showdown" ? 4.4 : 0,
       raiseTo: L?.minRaiseTo || 0,
-      quote: next.street === "showdown" ? next.winLabel : next.log[next.log.length - 1] || "",
+      quote:
+        next.street === "showdown"
+          ? next.winLabel
+          : actor?.isBot
+            ? thinkQuote(next)
+            : next.log[next.log.length - 1] || "",
     });
     if (next.street === "showdown") playSfx("win");
   },
@@ -122,14 +134,23 @@ export const usePoker = create<PokerState>((set, get) => ({
     playSfx(sfxFor(guessKind(table, next)));
     const nActor = next.toAct >= 0 ? next.players[next.toAct] : null;
     const L = heroLegal(next);
+    const spoken = lastSpeak(table, next);
     set({
       table: next,
       think: nActor?.isBot && next.street !== "showdown" ? botDelay(nActor.style) : 0,
       pause: next.street === "showdown" ? 4.4 : 0,
       raiseTo: L?.minRaiseTo || 0,
-      quote: next.street === "showdown" ? next.winLabel : lastSpeak(table, next),
+      quote: next.street === "showdown" ? next.winLabel : spoken,
     });
     if (next.street === "showdown") playSfx("win");
+    if (nActor?.isBot && next.street !== "showdown") {
+      window.setTimeout(() => {
+        const cur = usePoker.getState();
+        if (cur.table === next && cur.think > 0) {
+          usePoker.setState({ quote: thinkQuote(next) });
+        }
+      }, 650);
+    }
   },
   nextHand: () => {
     const { table } = get();
@@ -143,7 +164,7 @@ export const usePoker = create<PokerState>((set, get) => ({
       think: actor?.isBot ? botDelay(actor.style) : 0,
       pause: 0,
       raiseTo: L?.minRaiseTo || 0,
-      quote: `Hand #${next.hand}`,
+      quote: actor?.isBot ? thinkQuote(next) : tableLine("deal"),
     });
   },
   leave: () => set({ screen: "lobby", table: null, think: 0, pause: 0, quote: "" }),

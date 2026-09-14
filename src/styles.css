@@ -134,16 +134,17 @@
 }
 
 .table-say {
-  max-width: 9.5rem;
-  border-radius: 0.7rem;
+  max-width: 10rem;
+  border-radius: 0.85rem;
   background: var(--color-surface);
-  padding: 0.35rem 0.6rem;
+  padding: 0.4rem 0.7rem;
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-style: italic;
   line-height: 1.2;
   color: var(--color-fg);
   box-shadow: var(--shadow-border);
+  white-space: nowrap;
 }
 
 @keyframes seat-pulse {
