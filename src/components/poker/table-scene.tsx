@@ -135,12 +135,17 @@ function CameraRig({ lobby = false }: { lobby?: boolean }) {
   useFrame(({ camera }) => {
     const cam = camera as THREE.PerspectiveCamera;
     cam.near = 0.08;
-    cam.far = 24;
+    cam.far = 28;
     cam.clearViewOffset();
     const portrait = size.height / Math.max(1, size.width) > 1.05;
-    cam.fov = portrait ? 42 : 36;
-    cam.position.set(0, lobby ? 1.12 : 1.08, portrait ? 2.05 : 2.4);
-    cam.lookAt(0, 0.68, portrait ? -0.35 : -0.45);
+    cam.fov = portrait ? 36 : 32;
+    if (lobby) {
+      cam.position.set(0, 2.35, 2.7);
+      cam.lookAt(0, 0.08, -0.15);
+    } else {
+      cam.position.set(0, portrait ? 2.45 : 2.2, portrait ? 2.55 : 2.9);
+      cam.lookAt(0, 0.06, portrait ? -0.12 : -0.18);
+    }
     cam.updateProjectionMatrix();
   });
   return null;
@@ -212,6 +217,7 @@ export function TableScene() {
       {table.players.map((p) =>
         p.isHero ? (
           <group key={p.id}>
+            <EmptyChair seat={p.seat} />
             <ChipStack seat={p.seat} stack={p.stack} />
           </group>
         ) : (

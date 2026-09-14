@@ -13,8 +13,8 @@ export function GameApp() {
       <Canvas
         className={
           lobby
-            ? "absolute inset-x-0 top-16 bottom-60 touch-none sm:top-12 sm:bottom-52"
-            : "absolute inset-x-0 top-28 bottom-48 touch-none sm:top-24 sm:bottom-40"
+            ? "absolute inset-x-0 top-16 bottom-56 touch-none sm:top-12 sm:bottom-48"
+            : "absolute inset-x-0 top-16 bottom-44 touch-none sm:top-14 sm:bottom-36"
         }
         shadows
         dpr={[1, 1.75]}

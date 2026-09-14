@@ -69,11 +69,11 @@ export const REGULARS: Spec[] = [
 ];
 
 export function faceUrl(castId: string) {
-  return `/poker/cast/${castId}-disc.jpg?v=6`;
+  return `/poker/cast/${castId}-disc.jpg?v=7`;
 }
 
 export function thumbUrl(castId: string) {
-  return `/poker/cast/${castId}-face.png?v=6`;
+  return `/poker/cast/${castId}-face.png?v=7`;
 }
 
 export function makeHero(name: string): SeatPlayer {

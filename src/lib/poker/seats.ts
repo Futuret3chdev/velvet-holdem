@@ -9,16 +9,16 @@ export function seatPos(seat: number, count = 6, radiusX = 2.42, radiusZ = 1.78)
 }
 
 /**
- * Presentation seats. Hero is the camera (seat 0, near +Z). Opponents sit on a
- * compact far arc so every face is in frame on a portrait phone.
+ * Chairs sit just outside the rail. Hero (seat 0) is nearest the camera at +Z.
+ * Camera looks down at the felt, so these are markers — not a face wall.
  */
 const VIS: [number, number, number][] = [
-  [0, 0, 1.18],
-  [-0.7, 0, -0.72],
-  [-0.36, 0, -0.92],
-  [0, 0, -1.02],
-  [0.36, 0, -0.92],
-  [0.7, 0, -0.72],
+  [0, 0, 1.58],
+  [-1.52, 0, 0.62],
+  [-1.22, 0, -0.92],
+  [0, 0, -1.42],
+  [1.22, 0, -0.92],
+  [1.52, 0, 0.62],
 ];
 
 export function visPos(seat: number): [number, number, number] {
@@ -28,13 +28,13 @@ export function visPos(seat: number): [number, number, number] {
 /** Chip stacks sit on the felt, pulled toward the pot from each seat. */
 export function chipPos(seat: number): [number, number, number] {
   const [x, , z] = visPos(seat);
-  return [x * 0.58, 0, z * 0.52];
+  return [x * 0.52, 0, z * 0.5];
 }
 
-/** Hole cards on the felt in front of a bust. */
+/** Hole cards on the felt in front of a seat. */
 export function holePos(seat: number): [number, number, number] {
   const [x, , z] = visPos(seat);
-  return [x * 0.7, 0, z * 0.64];
+  return [x * 0.62, 0, z * 0.58];
 }
 
 export function visYaw(seat: number) {

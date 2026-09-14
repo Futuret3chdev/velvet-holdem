@@ -4,10 +4,37 @@ import { Slider } from "@/components/ui/slider";
 import { BIG_BLIND } from "@/lib/poker/roster";
 import { legal } from "@/lib/poker/engine";
 import { usePoker } from "@/lib/poker/store";
+import { spokenText } from "@/lib/poker/talk";
 import { PlayingCard } from "./playing-card";
 
 function money(n: number) {
   return n.toLocaleString();
+}
+
+function ActorCard() {
+  const table = usePoker((s) => s.table);
+  const quote = usePoker((s) => s.quote);
+  if (!table) return null;
+
+  const winner =
+    table.street === "showdown" && table.winners[0]
+      ? table.players.find((p) => p.id === table.winners[0])
+      : null;
+  const actor = table.toAct >= 0 ? table.players[table.toAct] : null;
+  const focus = winner ?? (actor && !actor.isHero ? actor : null);
+  if (!focus?.face) return null;
+
+  const line = quote ? spokenText(quote, focus.name) || quote.replace(`${focus.name}: `, "") : "";
+
+  return (
+    <div key={focus.id + (winner ? "-win" : "")} className="actor-card pointer-events-none absolute left-3 top-20 z-20 sm:top-16">
+      <img src={focus.face} alt="" className="actor-face" />
+      <div>
+        <p className="actor-name">{winner ? "Takes it" : "To act"} · {focus.name.split(" ")[0]}</p>
+        {line ? <p className="actor-line">{line}</p> : null}
+      </div>
+    </div>
+  );
 }
 
 export function Hud() {
@@ -17,7 +44,6 @@ export function Hud() {
   const setRaise = usePoker((s) => s.setRaise);
   const leave = usePoker((s) => s.leave);
   const nextHand = usePoker((s) => s.nextHand);
-  const quote = usePoker((s) => s.quote);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -55,7 +81,7 @@ export function Hud() {
       : actor
         ? actor.isHero
           ? "Your action"
-          : `${actor.name} to act`
+          : `${actor.name.split(" ")[0]} to act`
         : table.street;
 
   return (
@@ -84,10 +110,9 @@ export function Hud() {
           </div>
         ) : null}
         <p className="mt-2 text-center text-sm text-muted">{status}</p>
-        {quote ? (
-          <p className="table-say mx-auto mt-2 max-w-[92%]">{quote}</p>
-        ) : null}
       </div>
+
+      <ActorCard />
 
       <div className="pointer-events-auto mx-auto grid w-full max-w-lg gap-2">
         <div className="flex gap-1">
