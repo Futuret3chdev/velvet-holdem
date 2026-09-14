@@ -12,6 +12,7 @@ type Spec = {
   accent: string;
   hair: string;
   skin: string;
+  castId: string;
 };
 
 export const REGULARS: Spec[] = [
@@ -23,6 +24,7 @@ export const REGULARS: Spec[] = [
     accent: "#d7dbe3",
     hair: "#1c1c1c",
     skin: "#c58c6a",
+    castId: "nico",
   },
   {
     name: "Ruby Chen",
@@ -32,6 +34,7 @@ export const REGULARS: Spec[] = [
     accent: "#c9a9a4",
     hair: "#1a1210",
     skin: "#e0b089",
+    castId: "mira",
   },
   {
     name: "Cal Harrow",
@@ -41,6 +44,7 @@ export const REGULARS: Spec[] = [
     accent: "#b9a58a",
     hair: "#6a4a32",
     skin: "#d4a074",
+    castId: "omar",
   },
   {
     name: "Mira Sol",
@@ -50,6 +54,7 @@ export const REGULARS: Spec[] = [
     accent: "#8a7a68",
     hair: "#c9b48a",
     skin: "#f0c8a8",
+    castId: "sol",
   },
   {
     name: "Jax Rook",
@@ -59,8 +64,13 @@ export const REGULARS: Spec[] = [
     accent: "#9aa0aa",
     hair: "#c8c8c8",
     skin: "#c4a07c",
+    castId: "vex",
   },
 ];
+
+export function faceUrl(castId: string) {
+  return `/poker/cast/${castId}.png`;
+}
 
 export function makeHero(name: string): SeatPlayer {
   return {
@@ -81,6 +91,9 @@ export function makeHero(name: string): SeatPlayer {
     accent: "#d7dbe3",
     hair: "#2a221c",
     skin: "#d2a07a",
+    face: "",
+    castId: "",
+    lastAct: null,
   };
 }
 
@@ -103,6 +116,9 @@ export function makeBots(): SeatPlayer[] {
     accent: r.accent,
     hair: r.hair,
     skin: r.skin,
+    face: faceUrl(r.castId),
+    castId: r.castId,
+    lastAct: null,
   }));
 }
 

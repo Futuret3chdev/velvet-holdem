@@ -27,6 +27,9 @@ export type SeatPlayer = {
   accent: string;
   hair: string;
   skin: string;
+  face: string;
+  castId: string;
+  lastAct: ActionKind | null;
 };
 
 export type Table = {

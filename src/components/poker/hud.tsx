@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { BIG_BLIND, STYLE_LABEL } from "@/lib/poker/roster";
+import { BIG_BLIND } from "@/lib/poker/roster";
 import { legal } from "@/lib/poker/engine";
 import { usePoker } from "@/lib/poker/store";
 import { PlayingCard } from "./playing-card";
@@ -49,60 +49,69 @@ export function Hud() {
   const clamped = L ? Math.min(L.maxRaiseTo, Math.max(L.minRaiseTo, raiseTo)) : raiseTo;
   const board = table.community.slice(0, table.boardRevealed);
   const won = table.street === "showdown" && table.winners.includes(hero.id);
+  const status =
+    table.street === "showdown"
+      ? `${won ? "You take it" : table.winLabel}`
+      : actor
+        ? actor.isHero
+          ? "Your action"
+          : `${actor.name} to act`
+        : table.street;
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <header className="pointer-events-auto flex items-start justify-between gap-3">
         <div>
-          <p className="font-display text-2xl leading-none tracking-tight text-fg">Velvet Hold'em</p>
+          <p className="font-display text-xl leading-none tracking-tight text-fg sm:text-2xl">Velvet Hold'em</p>
           <p className="mt-1 text-xs text-muted">
             {BIG_BLIND / 2}/{BIG_BLIND} · Hand #{table.hand}
           </p>
+        </div>
+        <div className="text-center">
+          <p className="font-mono text-xs uppercase tracking-widest text-subtle">Pot</p>
+          <p className="font-display text-3xl leading-none tabular-nums text-fg sm:text-4xl">{money(table.pot)}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={leave}>
           Leave
         </Button>
       </header>
 
-      <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-2 text-center">
+      <div className="pointer-events-auto mx-auto grid w-full max-w-lg gap-2">
         {board.length ? (
-          <div className="flex gap-1">
+          <div className="flex justify-center gap-1">
             {board.map((c, i) => (
               <PlayingCard key={`${table.hand}-b${i}`} card={c} size="sm" />
             ))}
           </div>
         ) : null}
-        <p className="font-mono text-xs uppercase tracking-widest text-subtle">Pot</p>
-        <p className="font-display text-4xl leading-none tabular-nums text-fg sm:text-5xl">{money(table.pot)}</p>
-        <p className="max-w-sm text-sm text-muted">
-          {table.street === "showdown"
-            ? `${won ? "You take it" : table.winLabel} · ${table.winLabel}`
-            : actor
-              ? actor.isHero
-                ? "Your action"
-                : `${actor.name} to act`
-              : table.street}
-        </p>
-        {quote ? <p className="font-display text-base italic text-fg">{quote}</p> : null}
-      </div>
-
-      <div className="pointer-events-auto mx-auto grid w-full max-w-lg gap-3">
+        <div className="text-center">
+          <p className="text-sm text-muted">{status}</p>
+          {quote ? <p className="font-display text-base italic text-fg">{quote}</p> : null}
+        </div>
         <div className="flex gap-1 overflow-x-auto">
           {table.players.map((p) => (
             <div
               key={p.id}
-              className={`min-w-16 flex-1 rounded-lg px-2 py-1.5 ${
-                table.toAct === p.seat ? "bg-elevated" : "bg-surface/85"
+              className={`min-w-14 flex-1 rounded-lg px-1.5 py-1.5 ${
+                table.toAct === p.seat ? "seat-acting bg-elevated" : "bg-surface/85"
               }`}
             >
-              <p className="truncate text-xs font-medium text-fg">
+              {p.face ? (
+                <img
+                  src={p.face}
+                  alt=""
+                  className={`cast-thumb mx-auto ${p.folded ? "opacity-40" : ""}`}
+                />
+              ) : (
+                <div className="cast-thumb mx-auto flex items-center justify-center bg-elevated text-xs text-muted">
+                  You
+                </div>
+              )}
+              <p className="mt-1 truncate text-center text-xs font-medium text-fg">
                 {p.isHero ? "You" : p.name.split(" ")[0]}
                 {p.folded ? " · out" : ""}
               </p>
-              <p className="font-mono text-xs tabular-nums text-muted">{money(p.stack)}</p>
-              {!p.isHero ? (
-                <p className="text-xs uppercase tracking-wide text-subtle">{STYLE_LABEL[p.style]}</p>
-              ) : null}
+              <p className="text-center font-mono text-xs tabular-nums text-muted">{money(p.stack)}</p>
             </div>
           ))}
         </div>
@@ -178,7 +187,7 @@ export function Hud() {
                 </div>
               </div>
             ) : (
-              <p className="pb-3 text-sm text-muted">Wait for the action to come around.</p>
+              <p className="pb-2 text-sm text-muted">Wait for the action to come around.</p>
             )}
           </div>
         </div>

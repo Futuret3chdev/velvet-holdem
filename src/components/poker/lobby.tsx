@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { REGULARS, STYLE_LABEL } from "@/lib/poker/roster";
+import { REGULARS, STYLE_LABEL, faceUrl } from "@/lib/poker/roster";
 import { loadSavedName, usePoker } from "@/lib/poker/store";
 import { unlockAudio } from "@/lib/poker/audio";
 
@@ -18,14 +18,16 @@ export function Lobby() {
       </header>
       <div className="pointer-events-auto mx-auto w-full max-w-lg rounded-2xl bg-surface/95 p-4 shadow-[var(--shadow-border)]">
         <p className="text-sm leading-relaxed text-muted">
-          Five CGI regulars are already online. The empty chair is yours.
+          Five regulars from the floor are already seated. The empty chair is yours.
         </p>
-        <ul className="mt-3 grid grid-cols-2 gap-2">
+        <ul className="mt-3 flex gap-2">
           {REGULARS.map((r) => (
-            <li key={r.name} className="rounded-lg bg-elevated px-3 py-2">
-              <p className="text-sm font-medium text-fg">{r.name}</p>
+            <li key={r.name} className="min-w-0 flex-1 text-center">
+              <img src={faceUrl(r.castId)} alt="" className="cast-thumb mx-auto" />
+              <p className="mt-1 truncate text-xs font-medium text-fg">{r.name.split(" ")[0]}</p>
               <p className="text-xs text-muted">
-                <span className="online-dot" /> Online · {STYLE_LABEL[r.style]}
+                <span className="online-dot" />
+                {STYLE_LABEL[r.style]}
               </p>
             </li>
           ))}

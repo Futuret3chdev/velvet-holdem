@@ -1,29 +1,210 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Billboard, Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import type { Group } from "three";
-import { seatPos } from "@/lib/poker/seats";
+import * as THREE from "three";
+import { visPos } from "@/lib/poker/seats";
 import type { SeatPlayer } from "@/lib/poker/types";
+
+export type Mood = "idle" | "think" | "fold" | "win" | "fire";
+
+function moodOf(player: SeatPlayer, acting: boolean, winning: boolean): Mood {
+  if (winning) return "win";
+  if (player.folded) return "fold";
+  if (acting) return "think";
+  if (player.lastAct === "raise" || player.lastAct === "allin") return "fire";
+  return "idle";
+}
+
+const FILTER: Record<Mood, string> = {
+  idle: "brightness(1.08) contrast(1.1) saturate(1.08)",
+  think: "brightness(1.04) contrast(1.2) saturate(0.9)",
+  fold: "brightness(0.68) saturate(0.22) contrast(0.92)",
+  win: "brightness(1.22) saturate(1.3) contrast(1.12)",
+  fire: "brightness(1.14) contrast(1.22) saturate(1.12)",
+};
+
+function paintMood(ctx: CanvasRenderingContext2D, img: HTMLImageElement, mood: Mood, w: number, h: number) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.filter = FILTER[mood];
+  ctx.drawImage(img, 0, 0, w, h);
+  ctx.filter = "none";
+  ctx.globalCompositeOperation = "source-atop";
+  if (mood === "win") {
+    ctx.fillStyle = "rgba(210, 86, 86, 0.18)";
+    ctx.beginPath();
+    ctx.ellipse(w * 0.32, h * 0.46, w * 0.09, h * 0.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(w * 0.68, h * 0.46, w * 0.09, h * 0.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (mood === "think") {
+    const g = ctx.createLinearGradient(0, 0, 0, h * 0.42);
+    g.addColorStop(0, "rgba(0,0,0,0.22)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h * 0.42);
+  }
+  if (mood === "fold") {
+    ctx.fillStyle = "rgba(8, 8, 10, 0.28)";
+    ctx.fillRect(0, 0, w, h);
+  }
+  if (mood === "fire") {
+    ctx.fillStyle = "rgba(180, 70, 40, 0.1)";
+    ctx.fillRect(0, 0, w, h);
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+
+function useMoodPortrait(url: string, mood: Mood) {
+  const [img, setImg] = useState<HTMLImageElement | null>(null);
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const texRef = useRef<THREE.CanvasTexture | null>(null);
+
+  useEffect(() => {
+    let dead = false;
+    const im = new Image();
+    im.onload = () => {
+      if (!dead) setImg(im);
+    };
+    im.src = url;
+    return () => {
+      dead = true;
+    };
+  }, [url]);
+
+  useEffect(() => {
+    if (!img) return;
+    const c = canvasRef.current ?? document.createElement("canvas");
+    canvasRef.current = c;
+    const h = 640;
+    const w = Math.max(8, Math.round((img.width / img.height) * h));
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    paintMood(ctx, img, mood, w, h);
+    if (!texRef.current) {
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+      t.premultiplyAlpha = false;
+      texRef.current = t;
+      setTexture(t);
+    } else {
+      texRef.current.needsUpdate = true;
+      setTexture(texRef.current);
+    }
+  }, [img, mood]);
+
+  useEffect(
+    () => () => {
+      texRef.current?.dispose();
+      texRef.current = null;
+    },
+    [],
+  );
+
+  return { texture, aspect: img ? img.width / img.height : 0.68 };
+}
 
 function Chair() {
   return (
-    <group position={[0, 0, -0.18]}>
+    <group position={[0, 0, -0.16]}>
       <mesh position={[0, 0.22, 0]} castShadow receiveShadow>
-        <boxGeometry args={[0.46, 0.07, 0.42]} />
+        <boxGeometry args={[0.5, 0.07, 0.42]} />
         <meshStandardMaterial color="#1a1612" roughness={0.72} />
       </mesh>
       <mesh position={[0, 0.58, -0.2]} castShadow>
-        <boxGeometry args={[0.46, 0.68, 0.07]} />
+        <boxGeometry args={[0.5, 0.68, 0.07]} />
         <meshStandardMaterial color="#161310" roughness={0.7} />
       </mesh>
-      {[
-        [-0.18, 0.1, 0.16],
-        [0.18, 0.1, 0.16],
-        [-0.18, 0.1, -0.16],
-        [0.18, 0.1, -0.16],
-      ].map((p, i) => (
-        <mesh key={i} position={p as [number, number, number]} castShadow>
-          <boxGeometry args={[0.05, 0.2, 0.05]} />
-          <meshStandardMaterial color="#120f0c" roughness={0.8} />
+    </group>
+  );
+}
+
+function Hands({
+  jacket,
+  skin,
+  acting,
+  folded,
+  winning,
+  phase,
+  reduce,
+}: {
+  jacket: string;
+  skin: string;
+  acting: boolean;
+  folded: boolean;
+  winning: boolean;
+  phase: number;
+  reduce: boolean;
+}) {
+  const l = useRef<THREE.Group>(null);
+  const r = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime + phase;
+    const tap = reduce || folded ? 0 : acting ? Math.abs(Math.sin(t * 10)) * 0.05 : Math.abs(Math.sin(t * 1.4)) * 0.008;
+    const up = winning ? 0.38 + Math.sin(t * 7) * 0.1 : folded ? -0.05 : 0;
+    const rot = winning ? -1.15 : acting ? -0.55 : folded ? 0.15 : -0.25;
+    if (l.current) {
+      l.current.position.y = 0.13 + tap + up;
+      l.current.rotation.x = rot;
+      l.current.rotation.z = acting ? 0.12 : 0.04;
+    }
+    if (r.current) {
+      r.current.position.y = 0.13 + (acting ? Math.abs(Math.sin(t * 10 + 0.9)) * 0.05 : tap * 0.6) + up;
+      r.current.rotation.x = rot;
+      r.current.rotation.z = acting ? -0.12 : -0.04;
+    }
+  });
+  return (
+    <>
+      <group ref={l} position={[-0.15, 0.13, 0.2]}>
+        <mesh rotation={[1.05, 0.2, 0.1]} castShadow>
+          <capsuleGeometry args={[0.032, 0.16, 4, 8]} />
+          <meshStandardMaterial color={jacket} roughness={0.5} />
+        </mesh>
+        <mesh position={[0, -0.11, 0.05]} castShadow>
+          <sphereGeometry args={[0.038, 10, 10]} />
+          <meshStandardMaterial color={skin} roughness={0.55} />
+        </mesh>
+      </group>
+      <group ref={r} position={[0.15, 0.13, 0.2]}>
+        <mesh rotation={[1.05, -0.2, -0.1]} castShadow>
+          <capsuleGeometry args={[0.032, 0.16, 4, 8]} />
+          <meshStandardMaterial color={jacket} roughness={0.5} />
+        </mesh>
+        <mesh position={[0, -0.11, 0.05]} castShadow>
+          <sphereGeometry args={[0.038, 10, 10]} />
+          <meshStandardMaterial color={skin} roughness={0.55} />
+        </mesh>
+      </group>
+    </>
+  );
+}
+
+function WinSparks({ on }: { on: boolean }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    const g = ref.current;
+    if (!g || !on) return;
+    const t = state.clock.elapsedTime;
+    for (let i = 0; i < g.children.length; i += 1) {
+      const ch = g.children[i]!;
+      const u = (t * 0.7 + i * 0.19) % 1;
+      ch.position.set(Math.sin(t * 2.2 + i) * 0.22, 0.7 + u * 0.85, Math.cos(t * 1.6 + i) * 0.1);
+      ch.scale.setScalar(0.4 + (1 - u) * 0.8);
+    }
+  });
+  if (!on) return null;
+  return (
+    <group ref={ref}>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={i}>
+          <sphereGeometry args={[0.028, 8, 8]} />
+          <meshBasicMaterial color="#efe8d8" toneMapped={false} />
         </mesh>
       ))}
     </group>
@@ -31,11 +212,11 @@ function Chair() {
 }
 
 export function EmptyChair({ seat, lit = false }: { seat: number; lit?: boolean }) {
-  const [x, , z] = seatPos(seat, 6, 2.55, 1.92);
+  const [x, , z] = visPos(seat);
   return (
-    <group position={[x, 0, z]} rotation={[0, Math.atan2(-x, -z), 0]}>
+    <group position={[x, 0, z]}>
       <Chair />
-      {lit ? <pointLight position={[0, 1.1, 0.2]} intensity={1.6} distance={2.2} color="#f0d9a8" /> : null}
+      {lit ? <pointLight position={[0, 1.1, 0.2]} intensity={1.4} distance={2.2} color="#f0d9a8" /> : null}
     </group>
   );
 }
@@ -44,189 +225,126 @@ export function Character({
   player,
   acting,
   winning,
+  talking,
 }: {
   player: SeatPlayer;
   acting: boolean;
   winning: boolean;
+  talking?: boolean;
 }) {
-  const g = useRef<Group>(null);
-  const [x, , z] = seatPos(player.seat, 6, 2.55, 1.92);
-  const yaw = Math.atan2(-x, -z);
+  const root = useRef<THREE.Group>(null);
+  const lean = useRef(0);
+  const bob = useRef(0);
+  const [x, , z] = visPos(player.seat);
+  const mood = moodOf(player, acting, winning);
+  const { texture, aspect } = useMoodPortrait(player.face, mood);
   const reduce = useMemo(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     [],
   );
-  useFrame((state) => {
-    const m = g.current;
+  const fidget =
+    player.style === "maniac" ? 1.7 : player.style === "lag" ? 1.25 : player.style === "nit" ? 0.5 : 1;
+  const h = player.seat === 3 ? 1.12 : 1.02;
+  const w = h * Math.min(0.8, Math.max(0.56, aspect));
+
+  useFrame((state, dt) => {
+    const m = root.current;
     if (!m) return;
+    const d = Math.min(dt, 0.1);
+    const t = state.clock.elapsedTime + player.seat * 1.7;
+    const targetLean = winning ? 0.06 : acting ? 0.22 : player.folded ? -0.14 : 0;
+    const k = 1 - Math.exp(-7 * d);
+    lean.current += (targetLean - lean.current) * k;
     if (reduce) {
-      m.position.y = winning ? 0.06 : 0;
+      m.position.y = winning ? 0.05 : 0;
+      m.position.z = lean.current;
+      m.rotation.z = 0;
+      m.rotation.x = player.folded ? -0.08 : 0;
+      m.scale.setScalar(player.folded ? 0.96 : 1);
       return;
     }
-    const t = state.clock.elapsedTime + player.seat * 1.7;
-    const idle = player.folded ? 0.008 : 0.022;
-    m.position.y = Math.sin(t * 1.35) * idle + (winning ? 0.07 : 0) + (acting ? 0.04 : 0);
-    m.rotation.z = Math.sin(t * 0.8) * (acting ? 0.045 : 0.018);
+    const breathe = Math.sin(t * (player.folded ? 0.9 : 1.85) * fidget) * (player.folded ? 0.012 : 0.028);
+    const bounce = winning ? Math.abs(Math.sin(t * 6.4)) * 0.12 : 0;
+    const sway = Math.sin(t * 0.9 * fidget) * (acting ? 0.07 : 0.022);
+    const talk = talking ? Math.sin(t * 16) * 0.018 : 0;
+    bob.current = breathe + bounce + talk;
+    m.position.y = bob.current;
+    m.position.z = lean.current;
+    m.rotation.z = sway;
+    m.rotation.x = acting ? 0.12 : player.folded ? -0.18 : winning ? -0.05 : Math.sin(t * 0.55) * 0.03;
+    const s = player.folded ? 0.93 : winning ? 1.08 : talking ? 1.04 : acting ? 1.05 : 1;
+    m.scale.setScalar(s);
   });
 
-  const id = player.id;
-  const scale: [number, number, number] =
-    id === "bot-2" ? [1.12, 1.02, 1.08] : id === "bot-3" ? [0.94, 0.96, 0.94] : id === "bot-0" ? [1, 1.05, 1] : [1, 1, 1];
+  const first = player.name.split(" ")[0] ?? player.name;
 
   return (
-    <group position={[x, 0, z]} rotation={[0, yaw, 0]} scale={scale}>
+    <group position={[x, 0, z]}>
       <Chair />
-      <group ref={g}>
-        <mesh position={[0.2, 0.42, 0.22]} rotation={[1.15, 0.18, 0.12]} castShadow>
-          <capsuleGeometry args={[0.045, 0.34, 4, 8]} />
-          <meshStandardMaterial color={player.jacket} roughness={0.55} />
-        </mesh>
-        <mesh position={[-0.2, 0.42, 0.22]} rotation={[1.15, -0.18, -0.12]} castShadow>
-          <capsuleGeometry args={[0.045, 0.34, 4, 8]} />
-          <meshStandardMaterial color={player.jacket} roughness={0.55} />
-        </mesh>
-        <mesh position={[0.22, 0.12, 0.48]} rotation={[0, 0.2, 0]} castShadow>
-          <sphereGeometry args={[0.045, 10, 10]} />
-          <meshStandardMaterial color={player.skin} roughness={0.55} />
-        </mesh>
-        <mesh position={[-0.22, 0.12, 0.48]} rotation={[0, -0.2, 0]} castShadow>
-          <sphereGeometry args={[0.045, 10, 10]} />
-          <meshStandardMaterial color={player.skin} roughness={0.55} />
-        </mesh>
-        <mesh position={[0, 0.62, 0.02]} castShadow>
-          <capsuleGeometry args={[0.17, 0.44, 6, 12]} />
-          <meshStandardMaterial color={player.jacket} roughness={0.48} metalness={0.08} />
-        </mesh>
-        <mesh position={[0, 0.92, 0.08]} rotation={[0.18, 0, 0]} castShadow>
-          <boxGeometry args={[0.36, 0.14, 0.07]} />
-          <meshStandardMaterial color={player.accent} roughness={0.38} />
-        </mesh>
-        <mesh position={[0, 0.48, 0.04]} castShadow>
-          <boxGeometry args={[0.34, 0.08, 0.16]} />
-          <meshStandardMaterial color="#121014" roughness={0.65} />
-        </mesh>
-        <mesh position={[0, 1.2, 0.02]} castShadow>
-          <sphereGeometry args={[0.155, 20, 18]} />
-          <meshStandardMaterial color={player.skin} roughness={0.52} />
-        </mesh>
-        <mesh position={[0, 1.14, 0.145]}>
-          <sphereGeometry args={[0.03, 8, 8]} />
-          <meshStandardMaterial color={player.skin} roughness={0.6} />
-        </mesh>
-        <mesh position={[-0.05, 1.22, 0.13]}>
-          <sphereGeometry args={[0.018, 8, 8]} />
-          <meshStandardMaterial color="#1a1a1a" />
-        </mesh>
-        <mesh position={[0.05, 1.22, 0.13]}>
-          <sphereGeometry args={[0.018, 8, 8]} />
-          <meshStandardMaterial color="#1a1a1a" />
-        </mesh>
-        <mesh position={[0, 1.12, 0.14]} rotation={[player.folded ? 0.35 : 0.08, 0, 0]}>
-          <boxGeometry args={[0.07, 0.012, 0.02]} />
-          <meshStandardMaterial color="#3a241c" />
-        </mesh>
-        <Hair player={player} />
-        {id === "bot-0" ? <Glasses /> : null}
-        {id === "bot-1" ? <Earring color="#d7c38a" /> : null}
-        {id === "bot-2" ? <Beard color="#4a3224" /> : null}
-        {id === "bot-3" ? <Pearls /> : null}
-        {acting ? (
-          <mesh position={[0, 1.55, 0]}>
-            <sphereGeometry args={[0.035, 10, 10]} />
-            <meshStandardMaterial color="#e8eaee" emissive="#e8eaee" emissiveIntensity={0.85} />
+      <group ref={root}>
+        {texture ? (
+          <Billboard follow position={[0, 0.78, 0.02]}>
+            <mesh>
+              <planeGeometry args={[w, h]} />
+              <meshBasicMaterial
+                map={texture}
+                transparent
+                alphaTest={0.14}
+                depthWrite
+                toneMapped={false}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+          </Billboard>
+        ) : (
+          <mesh position={[0, 0.85, 0]}>
+            <capsuleGeometry args={[0.16, 0.5, 6, 10]} />
+            <meshStandardMaterial color={player.skin} />
           </mesh>
+        )}
+        <Hands
+          jacket={player.jacket}
+          skin={player.skin}
+          acting={acting}
+          folded={player.folded}
+          winning={winning}
+          phase={player.seat * 1.3}
+          reduce={reduce}
+        />
+        <WinSparks on={winning} />
+        {acting ? (
+          <>
+            <pointLight position={[0, 1.15, 0.35]} intensity={3.2} distance={2} color="#f2e2c0" />
+            <ThinkDots />
+          </>
         ) : null}
       </group>
+      <Html position={[0, -0.04, 0.1]} center style={{ pointerEvents: "none" }}>
+        <div className="table-tag">
+          <p className="table-tag-name">{first}</p>
+          <p className="table-tag-stack">{player.stack.toLocaleString()}</p>
+        </div>
+      </Html>
     </group>
   );
 }
 
-function Hair({ player }: { player: SeatPlayer }) {
-  const id = player.id;
-  if (id === "bot-1") {
-    return (
-      <group>
-        <mesh position={[0, 1.3, -0.02]} castShadow>
-          <sphereGeometry args={[0.16, 16, 12, 0, Math.PI * 2, 0, 1.15]} />
-          <meshStandardMaterial color={player.hair} roughness={0.68} />
-        </mesh>
-        <mesh position={[0, 1.38, -0.12]} castShadow>
-          <sphereGeometry args={[0.07, 12, 12]} />
-          <meshStandardMaterial color={player.hair} roughness={0.7} />
-        </mesh>
-      </group>
-    );
-  }
-  if (id === "bot-3") {
-    return (
-      <mesh position={[0, 1.22, -0.08]} scale={[1.05, 1.15, 1.2]} castShadow>
-        <sphereGeometry args={[0.17, 16, 12]} />
-        <meshStandardMaterial color={player.hair} roughness={0.62} />
-      </mesh>
-    );
-  }
-  if (id === "bot-4") {
-    return (
-      <mesh position={[0, 1.3, -0.01]} castShadow>
-        <boxGeometry args={[0.28, 0.12, 0.24]} />
-        <meshStandardMaterial color={player.hair} roughness={0.55} />
-      </mesh>
-    );
-  }
+function ThinkDots() {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    const g = ref.current;
+    if (!g) return;
+    const t = state.clock.elapsedTime;
+    g.children.forEach((ch, i) => {
+      ch.position.y = Math.abs(Math.sin(t * 6 + i * 0.7)) * 0.05;
+    });
+  });
   return (
-    <mesh position={[0, 1.3, -0.02]} castShadow>
-      <sphereGeometry args={[0.158, 16, 12, 0, Math.PI * 2, 0, 1.12]} />
-      <meshStandardMaterial color={player.hair} roughness={0.7} />
-    </mesh>
-  );
-}
-
-function Glasses() {
-  return (
-    <group position={[0, 1.22, 0.145]}>
-      <mesh position={[-0.055, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.038, 0.006, 8, 16]} />
-        <meshStandardMaterial color="#cfd3d8" metalness={0.6} roughness={0.25} />
-      </mesh>
-      <mesh position={[0.055, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.038, 0.006, 8, 16]} />
-        <meshStandardMaterial color="#cfd3d8" metalness={0.6} roughness={0.25} />
-      </mesh>
-      <mesh>
-        <boxGeometry args={[0.03, 0.008, 0.008]} />
-        <meshStandardMaterial color="#cfd3d8" metalness={0.5} roughness={0.3} />
-      </mesh>
-    </group>
-  );
-}
-
-function Earring({ color }: { color: string }) {
-  return (
-    <mesh position={[0.15, 1.16, 0.04]}>
-      <torusGeometry args={[0.025, 0.005, 8, 14]} />
-      <meshStandardMaterial color={color} metalness={0.7} roughness={0.3} />
-    </mesh>
-  );
-}
-
-function Beard({ color }: { color: string }) {
-  return (
-    <mesh position={[0, 1.1, 0.1]} scale={[0.9, 0.55, 0.7]} castShadow>
-      <sphereGeometry args={[0.12, 12, 10]} />
-      <meshStandardMaterial color={color} roughness={0.8} />
-    </mesh>
-  );
-}
-
-function Pearls() {
-  return (
-    <group position={[0, 1.02, 0.12]}>
+    <group ref={ref} position={[0, 1.38, 0.12]}>
       {[-0.06, 0, 0.06].map((x) => (
         <mesh key={x} position={[x, 0, 0]}>
-          <sphereGeometry args={[0.018, 10, 10]} />
-          <meshStandardMaterial color="#efe8d8" roughness={0.25} metalness={0.35} />
+          <sphereGeometry args={[0.022, 8, 8]} />
+          <meshBasicMaterial color="#efe8d8" toneMapped={false} />
         </mesh>
       ))}
     </group>

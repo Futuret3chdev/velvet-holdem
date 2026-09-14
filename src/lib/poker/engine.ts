@@ -76,6 +76,7 @@ export function newHand(t: Table): Table {
       allIn: false,
       hole: null,
       acted: false,
+      lastAct: null,
     })),
     street: "preflop",
     community: [],
@@ -230,14 +231,17 @@ export function applyAction(t: Table, kind: ActionKind, raiseTo = 0): Table {
   if (kind === "fold") {
     me.folded = true;
     me.acted = true;
+    me.lastAct = "fold";
     log = [...log, `${me.name} folds`];
   } else if (kind === "check" && L.check) {
     me.acted = true;
+    me.lastAct = "check";
     log = [...log, `${me.name} checks`];
   } else if (kind === "call" || (kind === "check" && !L.check)) {
     const amt = Math.min(me.stack, Math.max(0, toCall - me.bet));
     added = takeChips(me, amt);
     me.acted = true;
+    me.lastAct = amt === 0 ? "check" : "call";
     log = [...log, amt === 0 ? `${me.name} checks` : `${me.name} calls ${amt}`];
   } else {
     let to = kind === "allin" ? me.bet + me.stack : raiseTo;
@@ -249,8 +253,10 @@ export function applyAction(t: Table, kind: ActionKind, raiseTo = 0): Table {
       toCall = me.bet;
       lastAggressor = seat;
       for (const o of players) if (o.id !== me.id && !o.folded && !o.allIn) o.acted = false;
+      me.lastAct = kind === "allin" ? "allin" : "raise";
       log = [...log, `${me.name} raises to ${me.bet}`];
     } else {
+      me.lastAct = "call";
       log = [...log, `${me.name} puts in ${added}`];
     }
     me.acted = true;

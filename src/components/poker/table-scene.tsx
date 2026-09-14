@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { ContactShadows } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { usePoker } from "@/lib/poker/store";
 import { makeBots } from "@/lib/poker/roster";
-import { seatPos } from "@/lib/poker/seats";
+import { chipPos, holePos } from "@/lib/poker/seats";
 import { Character, EmptyChair } from "./character";
 import { CardMesh } from "./card-mesh";
+
+const DEG = Math.PI / 180;
 
 function makeFelt() {
   const c = document.createElement("canvas");
@@ -39,36 +41,20 @@ function makeFelt() {
   return t;
 }
 
-function Lamp() {
-  return (
-    <group position={[0, 2.85, 0]}>
-      <mesh>
-        <cylinderGeometry args={[0.035, 0.035, 1.15, 8]} />
-        <meshStandardMaterial color="#2a2a2e" metalness={0.65} roughness={0.32} />
-      </mesh>
-      <mesh position={[0, -0.64, 0]}>
-        <coneGeometry args={[0.58, 0.3, 20, 1, true]} />
-        <meshStandardMaterial color="#3a342c" side={THREE.DoubleSide} roughness={0.48} />
-      </mesh>
-      <pointLight position={[0, -0.72, 0]} intensity={16} distance={8.5} color="#f0d9a8" />
-    </group>
-  );
-}
-
 function TableBody() {
   const felt = useMemo(makeFelt, []);
   return (
     <group>
-      <mesh position={[0, 0.02, 0]} receiveShadow scale={[1.18, 1, 0.86]}>
-        <cylinderGeometry args={[1.95, 1.95, 0.1, 64]} />
+      <mesh position={[0, 0.02, 0]} receiveShadow scale={[1.05, 1, 0.82]}>
+        <cylinderGeometry args={[1.72, 1.72, 0.1, 64]} />
         <meshStandardMaterial map={felt} roughness={0.94} />
       </mesh>
-      <mesh position={[0, 0.085, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.18, 0.86, 1]} receiveShadow>
-        <torusGeometry args={[1.95, 0.085, 12, 64]} />
+      <mesh position={[0, 0.085, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.05, 0.82, 1]} receiveShadow>
+        <torusGeometry args={[1.72, 0.08, 12, 64]} />
         <meshStandardMaterial color="#8a7a55" metalness={0.58} roughness={0.32} />
       </mesh>
-      <mesh position={[0, 0.09, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.18, 0.86, 1]}>
-        <torusGeometry args={[1.42, 0.012, 8, 64]} />
+      <mesh position={[0, 0.09, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.05, 0.82, 1]}>
+        <torusGeometry args={[1.22, 0.012, 8, 64]} />
         <meshStandardMaterial color="#0a241c" roughness={0.8} />
       </mesh>
       <mesh position={[0, -0.3, 0]} receiveShadow>
@@ -82,52 +68,34 @@ function TableBody() {
 function Room() {
   return (
     <group>
-      <mesh position={[0, 1.6, -4.5]} receiveShadow>
-        <boxGeometry args={[12, 4.2, 0.22]} />
+      <mesh position={[0, 1.6, -3.6]} receiveShadow>
+        <boxGeometry args={[10, 4.2, 0.22]} />
         <meshStandardMaterial color="#121014" />
       </mesh>
-      <mesh position={[-5.4, 1.6, 0]} receiveShadow>
-        <boxGeometry args={[0.22, 4.2, 10]} />
+      <mesh position={[-4.4, 1.6, 0]} receiveShadow>
+        <boxGeometry args={[0.22, 4.2, 8]} />
         <meshStandardMaterial color="#0e0c10" />
       </mesh>
-      <mesh position={[5.4, 1.6, 0]} receiveShadow>
-        <boxGeometry args={[0.22, 4.2, 10]} />
+      <mesh position={[4.4, 1.6, 0]} receiveShadow>
+        <boxGeometry args={[0.22, 4.2, 8]} />
         <meshStandardMaterial color="#0e0c10" />
-      </mesh>
-      <mesh position={[0, 2.4, -4.28]}>
-        <boxGeometry args={[1.6, 1.05, 0.04]} />
-        <meshStandardMaterial color="#1a1814" />
-      </mesh>
-      <mesh position={[0, 2.4, -4.25]}>
-        <boxGeometry args={[1.42, 0.88, 0.02]} />
-        <meshStandardMaterial color="#2a241c" />
       </mesh>
       <mesh position={[0, -0.55, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[16, 16]} />
+        <planeGeometry args={[14, 14]} />
         <meshStandardMaterial color="#0c0b0d" />
       </mesh>
     </group>
   );
 }
 
-function ChipStack({
-  seat,
-  stack,
-  radiusX = 1.72,
-  radiusZ = 1.28,
-}: {
-  seat: number;
-  stack: number;
-  radiusX?: number;
-  radiusZ?: number;
-}) {
-  const [x, , z] = seatPos(seat, 6, radiusX, radiusZ);
+function ChipStack({ seat, stack }: { seat: number; stack: number }) {
+  const [x, , z] = chipPos(seat);
   const n = Math.max(1, Math.min(7, Math.round(stack / 420)));
   return (
     <group>
       {Array.from({ length: n }).map((_, i) => (
-        <mesh key={i} position={[x + 0.1, 0.1 + i * 0.026, z]} castShadow>
-          <cylinderGeometry args={[0.068, 0.068, 0.024, 16]} />
+        <mesh key={i} position={[x + 0.08, 0.1 + i * 0.026, z]} castShadow>
+          <cylinderGeometry args={[0.062, 0.062, 0.024, 16]} />
           <meshStandardMaterial
             color={i % 3 === 0 ? "#8b2e2e" : i % 3 === 1 ? "#efe8d8" : "#2c4a3a"}
             roughness={0.38}
@@ -140,10 +108,10 @@ function ChipStack({
 }
 
 function DealerPuck({ seat }: { seat: number }) {
-  const [x, , z] = seatPos(seat, 6, 1.5, 1.12);
+  const [x, , z] = chipPos(seat);
   return (
-    <mesh position={[x, 0.12, z]} rotation={[-Math.PI / 2, 0, 0]} castShadow>
-      <cylinderGeometry args={[0.075, 0.075, 0.018, 20]} />
+    <mesh position={[x - 0.16, 0.12, z + 0.08]} rotation={[-Math.PI / 2, 0, 0]} castShadow>
+      <cylinderGeometry args={[0.07, 0.07, 0.018, 20]} />
       <meshStandardMaterial color="#efe8d8" roughness={0.4} />
     </mesh>
   );
@@ -155,8 +123,8 @@ function PotChips({ pot }: { pot: number }) {
   return (
     <group>
       {Array.from({ length: n }).map((_, i) => (
-        <mesh key={i} position={[(i % 3) * 0.08 - 0.08, 0.11 + Math.floor(i / 3) * 0.026, 0.42]} castShadow>
-          <cylinderGeometry args={[0.06, 0.06, 0.022, 14]} />
+        <mesh key={i} position={[(i % 3) * 0.075 - 0.075, 0.11 + Math.floor(i / 3) * 0.026, 0.08]} castShadow>
+          <cylinderGeometry args={[0.055, 0.055, 0.022, 14]} />
           <meshStandardMaterial color={i % 2 ? "#8b2e2e" : "#efe8d8"} roughness={0.4} />
         </mesh>
       ))}
@@ -164,9 +132,25 @@ function PotChips({ pot }: { pot: number }) {
   );
 }
 
-function Aim({ at }: { at: [number, number, number] }) {
+function CameraRig({ lobby = false }: { lobby?: boolean }) {
+  const size = useThree((s) => s.size);
   useFrame(({ camera }) => {
-    camera.lookAt(at[0], at[1], at[2]);
+    const cam = camera as THREE.PerspectiveCamera;
+    const portrait = size.height / Math.max(1, size.width) > 1.12;
+    cam.near = 0.05;
+    cam.far = 28;
+    cam.clearViewOffset();
+    if (portrait) {
+      const hfov = (lobby ? 72 : 66) * DEG;
+      cam.fov = ((2 * Math.atan(Math.tan(hfov / 2) * (size.height / Math.max(1, size.width)))) * 180) / Math.PI;
+      cam.position.set(0, lobby ? 1.16 : 1.04, lobby ? 2.15 : 1.82);
+      cam.lookAt(0, lobby ? 0.9 : 0.82, -0.58);
+    } else {
+      cam.fov = lobby ? 40 : 38;
+      cam.position.set(0, 1.05, 2.35);
+      cam.lookAt(0, 0.82, -0.55);
+    }
+    cam.updateProjectionMatrix();
   });
   return null;
 }
@@ -182,21 +166,21 @@ function Lights() {
   return (
     <>
       <color attach="background" args={["#0b0a0c"]} />
-      <fog attach="fog" args={["#0b0a0c", 10, 22]} />
-      <hemisphereLight args={["#8a8478", "#08070a", 0.7]} />
+      <fog attach="fog" args={["#0b0a0c", 12, 26]} />
+      <hemisphereLight args={["#9a9488", "#08070a", 0.85]} />
       <spotLight
-        position={[2.4, 5.2, 3.2]}
-        intensity={22}
-        angle={0.58}
-        penumbra={0.65}
+        position={[0.4, 3.6, 2.4]}
+        intensity={18}
+        angle={0.7}
+        penumbra={0.72}
         color="#f2e2c0"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
-      <spotLight position={[-2.2, 3.4, -1.4]} intensity={7} angle={0.75} penumbra={0.8} color="#9aa4b2" />
-      <ambientLight intensity={0.18} />
-      <Lamp />
+      <spotLight position={[-1.8, 2.6, -0.4]} intensity={9} angle={0.8} penumbra={0.85} color="#c8d0dc" />
+      <pointLight position={[0, 1.6, 1.4]} intensity={4.5} distance={6} color="#f0e6d2" />
+      <ambientLight intensity={0.28} />
     </>
   );
 }
@@ -205,7 +189,7 @@ export function LobbyScene() {
   const bots = useMemo(() => makeBots(), []);
   return (
     <>
-      <Aim at={[0, 0.2, 0]} />
+      <CameraRig lobby />
       <Lights />
       <Room />
       <TableBody />
@@ -216,18 +200,19 @@ export function LobbyScene() {
           <ChipStack seat={p.seat} stack={p.stack} />
         </group>
       ))}
-      <ContactShadows position={[0, -0.54, 0]} opacity={0.45} scale={12} blur={2.4} far={5} />
+      <ContactShadows position={[0, -0.54, 0]} opacity={0.45} scale={10} blur={2.4} far={5} />
     </>
   );
 }
 
 export function TableScene() {
   const table = usePoker((s) => s.table);
+  const quote = usePoker((s) => s.quote);
   if (!table) return null;
   const winners = new Set(table.winners);
   return (
     <>
-      <Aim at={[0, 0.35, 0]} />
+      <CameraRig />
       <Ticker />
       <Lights />
       <Room />
@@ -237,24 +222,28 @@ export function TableScene() {
       {table.players.map((p) =>
         p.isHero ? (
           <group key={p.id}>
-            <EmptyChair seat={p.seat} />
             <ChipStack seat={p.seat} stack={p.stack} />
           </group>
         ) : (
           <group key={p.id}>
-            <Character player={p} acting={table.toAct === p.seat} winning={winners.has(p.id)} />
+            <Character
+              player={p}
+              acting={table.toAct === p.seat}
+              winning={winners.has(p.id)}
+              talking={Boolean(quote) && quote.startsWith(p.name)}
+            />
             <ChipStack seat={p.seat} stack={p.stack} />
             {p.hole && !p.folded
               ? p.hole.map((c, i) => {
-                  const [x, , z] = seatPos(p.seat, 6, 1.48, 1.12);
-                  const a = Math.atan2(x, z);
+                  const [hx, , hz] = holePos(p.seat);
                   return (
                     <CardMesh
                       key={`${table.hand}-${p.id}-${i}`}
                       card={c}
                       hidden={table.street !== "showdown"}
-                      position={[x + Math.cos(a + 0.4) * 0.08 * (i ? 1 : -1), 0.12, z]}
-                      rotation={[0, a, 0]}
+                      position={[hx + (i ? 0.08 : -0.08), 0.12, hz]}
+                      rotation={[-0.08, 0, i ? 0.08 : -0.08]}
+                      scale={0.85}
                     />
                   );
                 })
@@ -266,11 +255,12 @@ export function TableScene() {
         <CardMesh
           key={`${table.hand}-b${i}`}
           card={c}
-          position={[-0.52 + i * 0.26, 0.12, 0.02]}
+          position={[-0.52 + i * 0.26, 0.12, 0.22]}
           hidden={i >= table.boardRevealed}
+          scale={1.12}
         />
       ))}
-      <ContactShadows position={[0, -0.54, 0]} opacity={0.42} scale={12} blur={2.4} far={5} />
+      <ContactShadows position={[0, -0.54, 0]} opacity={0.42} scale={10} blur={2.4} far={5} />
     </>
   );
 }
