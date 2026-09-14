@@ -83,10 +83,10 @@ export function Hud() {
             ))}
           </div>
         ) : null}
-        <p className="mt-2 text-center text-sm text-muted">
-          {status}
-          {quote ? <span className="text-fg"> · {quote}</span> : null}
-        </p>
+        <p className="mt-2 text-center text-sm text-muted">{status}</p>
+        {quote ? (
+          <p className="table-say mx-auto mt-2 max-w-[92%]">{quote}</p>
+        ) : null}
       </div>
 
       <div className="pointer-events-auto mx-auto grid w-full max-w-lg gap-2">

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Billboard, Html } from "@react-three/drei";
+import { Billboard } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { visPos } from "@/lib/poker/seats";
-import { spokenText } from "@/lib/poker/talk";
 import type { SeatPlayer } from "@/lib/poker/types";
 
 export type Mood = "idle" | "think" | "fold" | "win" | "fire";
@@ -18,7 +17,7 @@ function moodOf(player: SeatPlayer, acting: boolean, winning: boolean): Mood {
 
 const TINT: Record<Mood, string> = {
   idle: "#ffffff",
-  think: "#d9d2c8",
+  think: "#d5cfc4",
   fold: "#8a8680",
   win: "#fff3e0",
   fire: "#ffe6d4",
@@ -40,7 +39,6 @@ function usePortraitTexture(url: string) {
       }
       loaded.colorSpace = THREE.SRGBColorSpace;
       loaded.anisotropy = 8;
-      loaded.premultiplyAlpha = true;
       loaded.minFilter = THREE.LinearFilter;
       loaded.needsUpdate = true;
       setTex(loaded);
@@ -155,14 +153,12 @@ function WinSparks({ on }: { on: boolean }) {
 }
 
 function FaceLife({
-  w,
-  h,
+  radius,
   phase,
   mood,
   reduce,
 }: {
-  w: number;
-  h: number;
+  radius: number;
   phase: number;
   mood: Mood;
   reduce: boolean;
@@ -175,23 +171,23 @@ function FaceLife({
     const period = 2.4 + (phase % 1.7);
     const cyc = t % period;
     const closed = !reduce && mood !== "fold" && (cyc < 0.09 || (cyc > 0.16 && cyc < 0.24 && phase % 1 > 0.45));
-    const lid = closed ? 0.94 : 0;
+    const lid = closed ? 0.92 : 0;
     if (lidL.current) lidL.current.opacity = lid;
     if (lidR.current) lidR.current.opacity = lid;
-    if (brow.current) brow.current.opacity = mood === "think" || mood === "fire" ? 0.32 : 0;
+    if (brow.current) brow.current.opacity = mood === "think" || mood === "fire" ? 0.3 : 0;
   });
   return (
-    <group position={[0, h * 0.14, 0.012]}>
-      <mesh position={[-w * 0.13, 0, 0]}>
-        <planeGeometry args={[w * 0.16, h * 0.032]} />
+    <group position={[0, radius * 0.12, 0.012]}>
+      <mesh position={[-radius * 0.22, 0, 0]}>
+        <planeGeometry args={[radius * 0.28, radius * 0.08]} />
         <meshBasicMaterial ref={lidL} color="#1a1410" transparent opacity={0} depthWrite={false} />
       </mesh>
-      <mesh position={[w * 0.13, 0, 0]}>
-        <planeGeometry args={[w * 0.16, h * 0.032]} />
+      <mesh position={[radius * 0.22, 0, 0]}>
+        <planeGeometry args={[radius * 0.28, radius * 0.08]} />
         <meshBasicMaterial ref={lidR} color="#1a1410" transparent opacity={0} depthWrite={false} />
       </mesh>
-      <mesh position={[0, h * 0.05, 0]}>
-        <planeGeometry args={[w * 0.42, h * 0.06]} />
+      <mesh position={[0, radius * 0.12, 0]}>
+        <planeGeometry args={[radius * 0.72, radius * 0.14]} />
         <meshBasicMaterial ref={brow} color="#1a1410" transparent opacity={0} depthWrite={false} />
       </mesh>
     </group>
@@ -212,35 +208,30 @@ export function Character({
   player,
   acting,
   winning,
-  quote,
 }: {
   player: SeatPlayer;
   acting: boolean;
   winning: boolean;
-  quote?: string;
 }) {
   const root = useRef<THREE.Group>(null);
   const lean = useRef(0);
   const [x, , z] = visPos(player.seat);
   const mood = moodOf(player, acting, winning);
   const texture = usePortraitTexture(player.face);
-  const line = spokenText(quote || "", player.name);
-  const talking = Boolean(line);
   const reduce = useMemo(
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     [],
   );
   const fidget =
     player.style === "maniac" ? 1.7 : player.style === "lag" ? 1.25 : player.style === "nit" ? 0.5 : 1;
-  const h = player.seat === 3 ? 1.22 : 1.12;
-  const w = h * 0.75;
+  const radius = player.seat === 3 ? 0.5 : 0.46;
 
   useFrame((state, dt) => {
     const m = root.current;
     if (!m) return;
     const d = Math.min(dt, 0.1);
     const t = state.clock.elapsedTime + player.seat * 1.7;
-    const targetLean = winning ? 0.06 : acting ? 0.18 : player.folded ? -0.12 : 0;
+    const targetLean = winning ? 0.06 : acting ? 0.16 : player.folded ? -0.1 : 0;
     lean.current += (targetLean - lean.current) * (1 - Math.exp(-7 * d));
     if (reduce) {
       m.position.y = winning ? 0.05 : 0;
@@ -249,37 +240,34 @@ export function Character({
       m.scale.setScalar(player.folded ? 0.96 : 1);
       return;
     }
-    const breathe = Math.sin(t * (player.folded ? 0.9 : 1.85) * fidget) * (player.folded ? 0.01 : 0.024);
+    const breathe = Math.sin(t * (player.folded ? 0.9 : 1.85) * fidget) * (player.folded ? 0.01 : 0.022);
     const bounce = winning ? Math.abs(Math.sin(t * 6.4)) * 0.1 : 0;
-    const talk = talking ? Math.sin(t * 16) * 0.016 : 0;
-    m.position.y = breathe + bounce + talk;
+    m.position.y = breathe + bounce;
     m.position.z = lean.current;
-    m.rotation.z = Math.sin(t * 0.9 * fidget) * (acting ? 0.06 : 0.02);
-    m.rotation.x = acting ? 0.1 : player.folded ? -0.16 : winning ? -0.05 : Math.sin(t * 0.55) * 0.025;
-    m.scale.setScalar(player.folded ? 0.94 : winning ? 1.07 : talking || acting ? 1.04 : 1);
+    m.rotation.z = Math.sin(t * 0.9 * fidget) * (acting ? 0.05 : 0.018);
+    m.rotation.x = acting ? 0.08 : player.folded ? -0.14 : winning ? -0.05 : Math.sin(t * 0.55) * 0.022;
+    m.scale.setScalar(player.folded ? 0.94 : winning ? 1.07 : acting ? 1.04 : 1);
   });
 
   return (
     <group position={[x, 0, z]}>
       <Chair />
       <group ref={root}>
+        <mesh position={[0, 0.52, 0]} castShadow>
+          <capsuleGeometry args={[0.16, 0.36, 6, 12]} />
+          <meshStandardMaterial color={player.jacket} roughness={0.5} metalness={0.08} />
+        </mesh>
         {texture ? (
-          <Billboard follow position={[0, 0.82, 0.04]}>
+          <Billboard follow position={[0, 1.08, 0.06]}>
             <mesh>
-              <planeGeometry args={[w, h]} />
-              <meshBasicMaterial
-                map={texture}
-                color={TINT[mood]}
-                transparent
-                premultipliedAlpha
-                alphaTest={0.05}
-                depthWrite
-                toneMapped={false}
-                side={THREE.DoubleSide}
-                opacity={mood === "fold" ? 0.78 : 1}
-              />
+              <circleGeometry args={[radius, 48]} />
+              <meshBasicMaterial map={texture} color={TINT[mood]} toneMapped={false} />
             </mesh>
-            <FaceLife w={w} h={h} phase={player.seat} mood={mood} reduce={reduce} />
+            <mesh>
+              <ringGeometry args={[radius, radius + 0.028, 48]} />
+              <meshBasicMaterial color="#1c1814" toneMapped={false} />
+            </mesh>
+            <FaceLife radius={radius} phase={player.seat} mood={mood} reduce={reduce} />
           </Billboard>
         ) : null}
         <Hands
@@ -292,12 +280,7 @@ export function Character({
           reduce={reduce}
         />
         <WinSparks on={winning} />
-        {acting ? <pointLight position={[0, 1.2, 0.35]} intensity={2.4} distance={1.8} color="#f2e2c0" /> : null}
-        {line ? (
-          <Html position={[0, 1.46, 0.08]} center distanceFactor={5} style={{ pointerEvents: "none" }}>
-            <div className="table-say">{line}</div>
-          </Html>
-        ) : null}
+        {acting ? <pointLight position={[0, 1.2, 0.35]} intensity={2.2} distance={1.8} color="#f2e2c0" /> : null}
       </group>
     </group>
   );

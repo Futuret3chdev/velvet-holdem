@@ -198,7 +198,6 @@ export function LobbyScene() {
 
 export function TableScene() {
   const table = usePoker((s) => s.table);
-  const quote = usePoker((s) => s.quote);
   if (!table) return null;
   const winners = new Set(table.winners);
   return (
@@ -221,7 +220,6 @@ export function TableScene() {
               player={p}
               acting={table.toAct === p.seat}
               winning={winners.has(p.id)}
-              quote={quote}
             />
             <ChipStack seat={p.seat} stack={p.stack} />
             {p.hole && !p.folded
